@@ -88,7 +88,7 @@ s.XDisplayLabels = ans
 s.YDisplayLabels = ans
 xlabel('CFC score')
 ylabel('CFC score')
-title("Average Swaps by Pairs of CFC score -Male- binned by  5")
+title("Average Swaps by Pairs of CFC score - Female- binned by  5")
 colormap(parula)
 % % % xlim([1.5 16.5])
 % % % ylim([1.5 16.5])
@@ -101,5 +101,5 @@ sf.XDisplayLabels = ans
 sf.YDisplayLabels = ans
 xlabel('CFC score')
 ylabel('CFC score')
-title("Number of Pairs per Bin - Male")
+title("Number of Pairs per Bin - Female")
 colormap(parula)
