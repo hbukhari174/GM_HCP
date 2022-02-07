@@ -35,7 +35,7 @@ matchedtables = [Tableofallsubjects Z];
 for i=1:length(matchedtables.indx)
 fp = matchedtables.index(i);
 sp = matchedtables.indx(i);
-Swapsbetweenpairs{i} = mat2cell(NRdist(fp,sp),1,1);
+Swapsbetweenpairs{i} = mat2cell(dist(fp,sp),1,1);
 end
 matchedtables.Swap = Swapsbetweenpairs';
 matchedtables.Swap2 = string(matchedtables.Swap);
