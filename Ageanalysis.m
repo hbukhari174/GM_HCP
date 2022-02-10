@@ -1,4 +1,3 @@
-
 %run in test_results folder for age based analysis
 clear all
 j = matfile('twininfo_997subj.mat');
@@ -25,6 +24,7 @@ for i=1:997
 dist(i,:) = Tableofallsubjects.OffDiagCounts{i};
 end
 
+
 % upper tri so each swap only considered once
 jist = triu(dist);
 %generate matrix for male-male
@@ -40,24 +40,31 @@ NRmat = j.matchhalfsib+j.matchDZ+j.matchfullsib+j.matchhalfsib+j.matchMZ;
 NRmat = NRmat == 0;
 NRmat = NRmat.*~eye(size(NRmat));
 
-%generate non-related m-m swaps
-
-NRmascmat=NRmat+M;
-NRmascmat=NRmascmat==2;
-NRmascmat=triu(NRmascmat);
-NRmascmat=logical(NRmascmat);
-NRmascswap=jist(NRmascmat);
-
-%generate non-related age-matched m-m swaps
 [~,~,f] = unique(j.age);
 agematch=f==f';
 agematch=agematch & eye(size(agematch))==0;
 agematch = triu(agematch);
+
+%generate all non-related agematched swaps
+NRagemat=NRmat+agematch;
+NRagemat=NRagemat==2;
+NRagemat=triu(NRagemat);
+TotalNRagematchswaps=jist(NRagemat);
+%generate non-related age-matched m-m swaps
+
 NRamMasmat=agematch+NRmat+M
 NRamMasmat=NRamMasmat==3;
 NRamMasmat=triu(NRamMasmat);
 NRamMasmat =logical(NRamMasmat);
 NRagematchmascswap=jist(NRamMasmat);
+
+%generate non-related m-m swaps
+
+NRmascmat=NRmat+M-NRagemat;
+NRmascmat=NRmascmat==2;
+NRmascmat=triu(NRmascmat);
+NRmascmat=logical(NRmascmat);
+NRmascswap=jist(NRmascmat);
 
 %generate non-related f-f swaps
 
@@ -67,33 +74,27 @@ F(~(isfemale | isfemale),:)=false;
 F(:,~(isfemale | isfemale))=false;
 F = triu(F);
 F=logical(F)
-NRfemalemat = F+NRmat
+NRfemalemat = F+NRmat-NRagemat
 NRfemalemat=NRfemalemat==2;
 NRfemalemat=triu(NRfemalemat);
 NRfemalemat=logical(NRfemalemat);
 NRfemswaps=jist(NRfemalemat);
 
 %generate non-related agematched  f-f swaps
-NRamFemmat=agematch+NRfemalemat
 %2 here because NRfemalemats have values of 1 (line 69)
-
+NRamFemmat=F+NRagemat
 NRamFemmat=NRamFemmat==2;
-NRamFemmat=triu(NRamFemmat)
-NRagematchfemswaps=jist(NRamFemmat);
-
+NRamFemmat=logical(triu(NRamFemmat))
+NRagematchfemswaps= jist(NRamFemmat);
 %generate all non-related swaps (496000 swaps)
 
-NRswaps=jist(logical(triu(NRmat)));
+NRswaps=jist(logical(triu(NRmat-NRagemat)));
 
-%generate all non-related agematched swaps
-NRagemat=NRmat+agematch;
-NRagemat=NRagemat==2;
-NRagemat=triu(NRagemat);
-TotalNRagematchswaps=jist(NRagemat);
+
 
 %generate non-related m-f swaps
 
-NRmasfemalemat=NRmat-(NRfemalemat+NRmascmat);
+NRmasfemalemat=NRmat-(NRfemalemat+NRmascmat)-NRagemat;
 NRmasfemalemat=logical(NRmasfemalemat)
 NRmasfemSwaps=jist(triu(NRmasfemalemat));
 
@@ -103,6 +104,7 @@ NRamMasFemmat=logical(NRamMasFemmat);
 NRamMasFemSwaps=jist(triu(NRamMasFemmat));
 
 
+%all NR are NR-NA i.e. F-FNR is NR-Na F-FNR
 
 FemalesNRAM = [array2table(NRagematchfemswaps)];
 FemalesNRAM.Properties.VariableNames(1) = {'Swap'};
@@ -134,11 +136,10 @@ MalesNR.vs(:) = {'MNR'};
 
 TotalNR = [array2table(NRswaps)];
 TotalNR.Properties.VariableNames(1) = {'Swap'};
-TotalNR.vs(:) = {'NR'};
+TotalNR.vs(:) = {'NR'}; 
 
 ANOvasa = [TotalNR;TotalAMswaps;FemalesNR;FemalesNRAM;MalesNR;MalesNRAM;MalesFemalesNR;MalesFemalesNRAM];
-[p,t,stats] = anova1(ANOvasa.Swap,ANOvasa.vs);
+[p,t,stats] = anova1(ANOvasa.Swap*100/392,ANOvasa.vs);
 %saveas(gcf,('anovadiag'));
 %saveas(gcf,('anovatable'));
 [c,m,h] =  multcompare(stats,'Dimension',[1],'CType','bonferroni');
-%saveas(gcf,('mutlcompareage'));
