@@ -1,0 +1,288 @@
+%all CTC
+clear all
+close all
+load('Allsffresh_regpenalty.mat','-mat')
+
+
+HCPbehaviordata = readtable('hcp_behaviour.csv');
+T.Properties.VariableNames(1) = {'Subject'};
+CTCdataindex = find(string(HCPbehaviordata.Properties.VariableNames) == "CogTotalComp_AgeAdj")
+CTCdatatable = HCPbehaviordata(:,[1 CTCdataindex]);
+Commons = innerjoin(CTCdatatable, T, 'Keys','Subject');
+Commons.CogTotalComp_AgeAdj = ceil(Commons.CogTotalComp_AgeAdj/5)*5;
+
+
+[xxa,~,f] = unique(Commons.CogTotalComp_AgeAdj);
+[sortedctc,ctcx]=sort(f(:,1),"ascend");
+[C, ia, ic] = unique(sortedctc);
+via =[ia];
+[via(2:end,1)-1;997];
+via = [ia ans];
+
+
+
+dist(eye(size(dist))==1) = nan;
+pietra = dist(ctcx,ctcx);
+
+
+parfor i=1:29
+for ii = 1:29
+mira = via(i,1);
+moja = via(i,2);
+mixa = via(ii,1);
+moxa = via(ii,2);
+mean(pietra(mira:moja,mixa:moxa),[1 2],'omitnan');
+pil = mat2cell(ans,1,1);
+ctcaveragio(i,ii) = pil;
+end
+end
+apex = ctcaveragio(2:17,2:17);
+figure
+
+summermap =  flipud(brewermap(10000, 'RdYlBu'));
+cleanedallpairsctc=cell2mat(apex)
+janr=mean(cleanedallpairsctc(5:16,1:4),[2])
+chosenpairsctc=cell2mat(apex(5:16,5:16))
+chosenpairsctc=[janr chosenpairsctc]
+
+mean(cell2mat(apex(1:4,1:4)),[1 2])
+toprow=[ans janr']
+chosenpairsctcend=[toprow;chosenpairsctc]
+last8rc=mean(chosenpairsctcend(12:13,1:11),[1])
+last8rc(1,12)=mean(chosenpairsctcend(12:13,12:13),[1 2])
+chosenpairsctcfinal=[chosenpairsctcend(1:11,1:11); last8rc(1:11)]
+chosenpairsctcfinal=[chosenpairsctcfinal last8rc']
+summermap =  flipud(brewermap(10000, 'RdYlBu'));
+s = surf(chosenpairsctcfinal*100/392);%s.CellLabelColor = 'none'
+colormap(summermap)
+title("All Swap CTC score binned by  5")
+%saveas(gcf,('SwapDistanceFigures/CTCSwapall'));
+%exportgraphics(gcf,('SwapDistanceFigures/CTCSwapAl.jpg'))
+% %ctc pairs
+ff = accumarray(f,1)
+bsxfun(@times,accumarray(f,1),accumarray(f,1)')
+ans(2:17,2:17)
+ans-diag(ff(2:17,1))
+allpairs=ans;
+cleanedallpairs=allpairs
+janr=sum(cleanedallpairs(5:16,1:4),[2])
+chosenpairs=allpairs(5:16,5:16)
+chosenpairs=[janr chosenpairs]
+
+sum(cleanedallpairs(1:4,1:4),[1 2])
+toprow=[ans janr']
+chosenpairsend=[toprow;chosenpairs]
+last8rc=sum(chosenpairsend(12:13,1:11),[1])
+last8rc(1,12)=sum(chosenpairsend(12:13,12:13),[1 2])
+chosenpairsfinal=[chosenpairsend(1:11,1:11); last8rc(1:11)]
+chosenpairsfinal=[chosenpairsfinal last8rc']
+figure
+c = heatmap(chosenpairsfinal)
+title('pair no all')
+%% women-women ctc
+clearvars 
+load('Allsffresh_regpenalty.mat')
+
+
+HCPbehaviordata = readtable('hcp_behaviour.csv');
+T.Properties.VariableNames(1) = {'Subject'};
+CTCdataindex = find(string(HCPbehaviordata.Properties.VariableNames) == "CogTotalComp_AgeAdj")
+CTCdatatable = HCPbehaviordata(:,[1 CTCdataindex]);
+Commons = innerjoin(CTCdatatable, T, 'Keys','Subject');
+Commons.CogTotalComp_AgeAdj = ceil(Commons.CogTotalComp_AgeAdj/5)*5;
+
+infofile = matfile('twininfo_997subj.mat');
+
+[xxa,~,f] = unique(Commons.CogTotalComp_AgeAdj);
+[sortedctc,ctcx]=sort(f(:,1),"ascend");
+[C, ia, ic] = unique(sortedctc);
+via =[ia];
+[via(2:end,1)-1;997];
+via = [ia ans];
+
+[xxa,~,f] = unique(Commons.CogTotalComp_AgeAdj);
+
+female = strcmp(infofile.gender, "F");
+femmatch=female.*female';
+femmatch=femmatch & eye(size(femmatch))==0;
+allswaps = ones(997,997);
+allswaps = allswaps.*~eye(size(allswaps));
+allswaps = allswaps;
+
+
+femswapmat = allswaps.*femmatch;
+
+[row,col]=find(allswaps==1);
+
+dist(eye(size(dist))==1) = nan;
+femswapmat(femswapmat == 0) = NaN;
+femdsit = dist.*femswapmat;
+pietra = femdsit(ctcx,ctcx);
+
+
+parfor i =1:29
+for ii = 1:29
+mira = via(i,1);
+moja = via(i,2);
+mixa = via(ii,1);
+moxa = via(ii,2);
+mean(pietra(mira:moja,mixa:moxa),[1 2],'omitnan');
+pil = mat2cell(ans,1,1);
+ctcaveragio(i,ii) = pil;
+end
+end
+apex = ctcaveragio(2:17,2:17)
+figure
+summermap =  flipud(brewermap(10000, 'RdYlBu'));
+cleanedallpairsctc=cell2mat(apex)
+janr=mean(cleanedallpairsctc(5:16,1:4),[2])
+chosenpairsctc=cell2mat(apex(5:16,5:16))
+chosenpairsctc=[janr chosenpairsctc]
+
+mean(cell2mat(apex(1:4,1:4)),[1 2])
+toprow=[ans janr']
+chosenpairsctcend=[toprow;chosenpairsctc]
+last8rc=mean(chosenpairsctcend(12:13,1:11),[1])
+last8rc(1,12)=mean(chosenpairsctcend(12:13,12:13),[1 2])
+chosenpairsctcfinal=[chosenpairsctcend(1:11,1:11); last8rc(1:11)]
+chosenpairsctcfinal=[chosenpairsctcfinal last8rc']
+summermap =  flipud(brewermap(10000, 'RdYlBu'));
+s = surf(chosenpairsctcfinal*100/392);
+%s.CellLabelColor = 'none'
+colormap(summermap)
+title("Female SWAP CTC score binned by  5")
+%saveas(gcf,('SwapDistanceFigures/CTCFFAgeall'));
+%exportgraphics(gcf,('SwapDistanceFigures/CTCFFAgAl.jpg'))
+
+% %ctc f-f pairs
+pairff = ~isnan(pietra);
+parfor i =1:29
+for ii = 1:29
+mira = via(i,1);
+moja = via(i,2);
+mixa = via(ii,1);
+moxa = via(ii,2);
+sum(pairff(mira:moja,mixa:moxa),[1 2]);
+pil =ans;
+ctcpairs(i,ii) = pil;
+end
+end
+figure
+%c = heatmap(ctcpairs(2:17,2:17))
+ctcpairs=ctcpairs(2:17,2:17)
+cleanedallpairs=ctcpairs
+janr=sum(cleanedallpairs(5:16,1:4),[2])
+chosenpairs=ctcpairs(5:16,5:16)
+chosenpairs=[janr chosenpairs]
+
+sum(ctcpairs(1:4,1:4),[1 2])
+toprow=[ans janr']
+chosenpairsend=[toprow;chosenpairs]
+last8rc=sum(chosenpairsend(12:13,1:11),[1])
+last8rc(1,12)=sum(chosenpairsend(12:13,12:13),[1 2])
+chosenpairsfinal=[chosenpairsend(1:11,1:11); last8rc(1:11)]
+chosenpairsfinal=[chosenpairsfinal last8rc']
+figure
+c=heatmap(chosenpairsfinal)
+title("Female no of Pairs of CTC score binned by  5")
+%% Male-male CTC
+clearvars -except dist
+infofile = matfile('twininfo_997subj.mat');
+load('Allsffresh_regpenalty.mat')
+
+
+male = strcmp(infofile.gender, "M");
+malematch=male.*male';
+malematch=malematch & eye(size(malematch))==0;
+
+
+HCPbehaviordata = readtable('hcp_behaviour.csv');
+T.Properties.VariableNames(1) = {'Subject'};
+CTCdataindex = find(string(HCPbehaviordata.Properties.VariableNames) == "CogTotalComp_AgeAdj")
+CTCdatatable = HCPbehaviordata(:,[1 CTCdataindex]);
+Commons = innerjoin(CTCdatatable, T, 'Keys','Subject');
+Commons.CogTotalComp_AgeAdj = ceil(Commons.CogTotalComp_AgeAdj/5)*5;
+
+
+[xxa,~,f] = unique(Commons.CogTotalComp_AgeAdj);
+[sortedctc,ctcx]=sort(f(:,1),"ascend");
+[C, ia, ic] = unique(sortedctc);
+via =[ia];
+[via(2:end,1)-1;997];
+via = [ia ans];
+
+allswaps = ones(997,997);
+allswaps = allswaps.*~eye(size(allswaps));
+allswaps = allswaps;
+maleswapmat = allswaps.*malematch;
+
+[row,col]=find(allswaps==1);
+dist(eye(size(dist))==1) = nan;
+
+maleswapmat(maleswapmat == 0) = NaN;
+maledist = dist.*maleswapmat;
+pietra = maledist(ctcx,ctcx);
+
+parfor i =1:29
+for ii = 1:29
+mira = via(i,1);
+moja = via(i,2);
+mixa = via(ii,1);
+moxa = via(ii,2);
+mean(pietra(mira:moja,mixa:moxa),[1 2],'omitnan');
+pil = mat2cell(ans,1,1);
+ctcaveragio(i,ii) = pil;
+end
+end
+apex = ctcaveragio(2:17,2:17)
+figure
+cleanedallpairsctc=cell2mat(apex)
+janr=mean(cleanedallpairsctc(5:16,1:4),[2])
+chosenpairsctc=cell2mat(apex(5:16,5:16))
+chosenpairsctc=[janr chosenpairsctc]
+
+mean(cell2mat(apex(1:4,1:4)),[1 2])
+toprow=[ans janr']
+chosenpairsctcend=[toprow;chosenpairsctc]
+last8rc=mean(chosenpairsctcend(12:13,1:11),[1])
+last8rc(1,12)=mean(chosenpairsctcend(12:13,12:13),[1 2])
+chosenpairsctcfinal=[chosenpairsctcend(1:11,1:11); last8rc(1:11)]
+chosenpairsctcfinal=[chosenpairsctcfinal last8rc']
+summermap =  flipud(brewermap(10000, 'RdYlBu'));
+s = surf(chosenpairsctcfinal*100/392);
+%s.CellLabelColor = 'none'
+colormap(summermap)
+title("Male SWAP CTC score binned by  5")
+
+%saveas(gcf,('SwapDistanceFigures/CTCMMAgeall'));
+%exportgraphics(gcf,('SwapDistanceFigures/CTCMMAgAl.jpg'))
+% %ctc pairs mm
+ pairmm = ~isnan(pietra);
+ parfor i =1:29
+ for ii = 1:29
+mira = via(i,1);
+ moja = via(i,2); 
+mixa = via(ii,1);
+ moxa = via(ii,2);
+ sum(pairmm(mira:moja,mixa:moxa),[1 2]);
+ pil =ans;
+ ctcpairs(i,ii) = pil;
+ end
+ end
+ctcpairs=ctcpairs(2:17,2:17)
+cleanedallpairs=ctcpairs
+janr=sum(cleanedallpairs(5:16,1:4),[2])
+chosenpairs=ctcpairs(5:16,5:16)
+chosenpairs=[janr chosenpairs]
+
+sum(ctcpairs(1:4,1:4),[1 2])
+toprow=[ans janr']
+chosenpairsend=[toprow;chosenpairs]
+last8rc=sum(chosenpairsend(12:13,1:11),[1])
+last8rc(1,12)=sum(chosenpairsend(12:13,12:13),[1 2])
+chosenpairsfinal=[chosenpairsend(1:11,1:11); last8rc(1:11)]
+chosenpairsfinal=[chosenpairsfinal last8rc']
+figure
+c=heatmap(chosenpairsfinal)
+title("male no of Pairs of CTC score binned by  5")
+% .

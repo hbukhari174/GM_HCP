@@ -1,0 +1,175 @@
+clear all
+
+infofile = matfile('twininfo_997subj.mat');
+[xxa,~,f] = unique(infofile.age);
+[sortedage,agex]=sort(f(:,1),"ascend");
+[C, ia, ic] = unique(sortedage);
+via =[ia];
+[via(2:end,1)-1;997];
+via = [ia ans];
+
+load('Allsffresh_regpenalty.mat')
+allswaps = ones(997,997);
+allswaps = allswaps.*~eye(size(allswaps));
+allswaps = allswaps;
+[row,col]=find(allswaps==1);
+dist(eye(size(dist))==1) = nan;
+
+
+
+pietra = dist(agex,agex);
+
+
+parfor i =1:16
+for ii = 1:16
+mira = via(i,1);
+moja = via(i,2);
+mixa = via(ii,1);
+moxa = via(ii,2);
+mean(pietra(mira:moja,mixa:moxa),[1 2],'omitnan');
+pil = mat2cell(ans,1,1);
+ageaveragio(i,ii) = pil;
+end
+end
+apex = ageaveragio(1:14,1:14)
+X = reshape(repelem(22:35,14), 14, 14);
+Y = reshape(repelem(22:35,14), 14, 14)';
+% use smaller increment (0.2) will generate smoother sufaces compared to
+% larger ones (e.g. 2)
+[x, y] = meshgrid(22:0.2:35, 22:0.2:35); 
+% apex is as generated in AgeSurf.m
+f = interp2(X, Y, cell2mat(apex)*100/392, x, y,'spline');
+% For example, either 'spline' or 'cubic' will give smoother surface
+% compared to 'linear'
+
+figure;
+surfage = surf(x, y, f);
+summermap =  flipud(brewermap(10000, 'RdYlBu'));
+colormap(summermap)
+title('all SURF reg')
+shading interp 
+saveas(gcf,('surfAgeall'));
+exportgraphics(gcf,('surfAgAl.jpg'))
+%% f-f age surf
+clearvars -except surfage dist
+
+infofile = matfile('twininfo_997subj.mat');
+[xxa,~,f] = unique(infofile.age);
+[sortedage,agex]=sort(f(:,1),"ascend");
+[C, ia, ic] = unique(sortedage);
+via =[ia];
+[via(2:end,1)-1;997];
+via = [ia ans];
+
+female = strcmp(infofile.gender, "F");
+femmatch=female.*female';
+femmatch=femmatch & eye(size(femmatch))==0;
+
+
+
+allswaps = ones(997,997);
+allswaps = allswaps.*~eye(size(allswaps));
+allswaps = allswaps;
+
+femswapmat = allswaps.*femmatch;
+
+[row,col]=find(allswaps==1);
+
+
+femswapmat(femswapmat == 0) = NaN;
+femdist = dist.*femswapmat;
+pietra = femdist(agex,agex);
+
+
+parfor i =1:16
+for ii = 1:16
+mira = via(i,1);
+moja = via(i,2);
+mixa = via(ii,1);
+moxa = via(ii,2);
+mean(pietra(mira:moja,mixa:moxa),[1 2],'omitnan');
+pil = mat2cell(ans,1,1);
+ageaveragio(i,ii) = pil;
+end
+end
+apex = ageaveragio(1:14,1:14)
+X = reshape(repelem(22:35,14), 14, 14);
+Y = reshape(repelem(22:35,14), 14, 14)';
+% use smaller increment (0.2) will generate smoother sufaces compared to
+% larger ones (e.g. 2)
+[x, y] = meshgrid(22:0.2:35, 22:0.2:35); 
+% apex is as generated in AgeSurf.m
+f = interp2(X, Y, cell2mat(apex)*100/392, x, y,'spline');
+% For example, either 'spline' or 'cubic' will give smoother surface
+% compared to 'linear'
+
+figure;
+surfage = surf(x, y, f);
+summermap =  flipud(brewermap(10000, 'RdYlBu'));
+colormap(summermap)
+title('Female-Female SURF reg')
+shading interp 
+% saveas(gcf,('surfFFAgeall'));
+% exportgraphics(gcf,('surfFFAgAl.jpg'))
+%% m-m
+clearvars -except surfage surfagef dist
+
+infofile = matfile('twininfo_997subj.mat');
+[xxa,~,f] = unique(infofile.age);
+[sortedage,agex]=sort(f(:,1),"ascend");
+[C, ia, ic] = unique(sortedage);
+via =[ia];
+[via(2:end,1)-1;997];
+via = [ia ans];
+
+male = strcmp(infofile.gender, "M");
+malematch=male.*male';
+malematch=malematch & eye(size(malematch))==0;
+
+
+
+allswaps = ones(997,997);
+allswaps = allswaps.*~eye(size(allswaps));
+allswaps = allswaps;
+
+maleswapmat = allswaps.*malematch;
+
+[row,col]=find(allswaps==1);
+
+maleswapmat(maleswapmat == 0) = NaN;
+maledist = dist.*maleswapmat;
+pietra = maledist(agex,agex);
+
+
+parfor i =1:16
+for ii = 1:16
+mira = via(i,1);
+moja = via(i,2);
+mixa = via(ii,1);
+moxa = via(ii,2);
+mean(pietra(mira:moja,mixa:moxa),[1 2],'omitnan');
+pil = mat2cell(ans,1,1);
+ageaveragio(i,ii) = pil;
+end
+end
+apex = ageaveragio(1:14,1:14);
+X = reshape(repelem(22:35,14), 14, 14);
+Y = reshape(repelem(22:35,14), 14, 14)';
+% use smaller increment (0.2) will generate smoother sufaces compared to
+% larger ones (e.g. 2)
+[x, y] = meshgrid(22:0.2:35, 22:0.2:35); 
+% apex is as generated in AgeSurf.m
+f = interp2(X, Y, cell2mat(apex)*100/392, x, y,'spline');
+% For example, either 'spline' or 'cubic' will give smoother surface
+% compared to 'linear'
+
+figure;
+surfage = surf(x, y, f);
+summermap =  flipud(brewermap(10000, 'RdYlBu'));
+colormap(summermap)
+title('Male-Male SURF reg')
+shading interp 
+saveas(gcf,('surfMMAgeall'));
+exportgraphics(gcf,('surfMMAgAl.jpg'))
+
+

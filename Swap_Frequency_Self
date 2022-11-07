@@ -1,0 +1,202 @@
+clear all
+infofile = matfile('twininfo_997subj.mat');;
+Retest = 1:41
+T = table(infofile.subjects(Retest,1), infofile.gender(Retest,1), infofile.age(Retest,1));
+T.Properties.VariableNames([1 2 3]) = {'Subject ID' 'Sex' 'Age'};
+#change allfiles according to penalty
+allfiles = dir('*o_all_pairs.mat');
+#sort allfiles from 1 subject 41
+allfiles = natsortfiles(allfiles);
+
+for ii=1:length(allfiles)
+fileData{ii} = matfile(allfiles(ii).name);
+offdata{ii} = fileData{ii}.offdiag_swap_counts(1:997,1);
+end
+# Populate T to visualize self data in table form and construct distance matrix
+T.OffDiagCounts = transpose(offdata);
+T.Sex = char(T{:,2});
+retest_dist = zeros(997,997);
+for i=1:41
+retest_dist(i,:) = T.OffDiagCounts{i};
+end
+row = 1:41;
+col = [21,29,51,67,70,96,111,133,158,168,182,192,196,204,221,223,231,265,312,322,339,351,378,388,408,414,419,442,445,459,529,552,651,721,758,759,790,867,913,914,925];
+v = []
+for i=1:length(row)
+c = row(i);
+xx = col(i);
+v{i} = retest_dist(c,xx);
+end
+v = cell2mat(v)
+allregionandpersonswapindex = cell(length(row),1);
+sior = [];
+
+
+parfor i=1:length(row)
+c = row(i);
+xx = col(i);
+jiorlength = v(1,i);
+Chosenfiles = matfile(allfiles(c).name);
+swapposition = Chosenfiles.swap_positions;
+san = squeeze(swapposition(xx,:,:));
+san(san(:,1)==san(:,2),:)=[];
+sior = [(repelem(c,jiorlength)'),((repelem(xx,jiorlength))'),san];
+jil = mat2cell(sior,jiorlength,4);
+allregionandpersonswapindex(i)= jil;
+end
+
+
+
+
+ARSI = vertcat(allregionandpersonswapindex{:});
+[i,~,j] = unique(ARSI(:, [3 4]), 'rows');
+mix=accumarray(j,1)/41;
+
+parrt = [i mix];
+regionswapmat=full(sparse(parrt(:,1), parrt(:,2), parrt(:,3), 392, 392))
+
+opts = detectImportOptions('CC400_Yeo7_Map.csv');
+opts.SelectedVariableNames = [2];
+M = readmatrix('CC400_Yeo7_Map.csv',opts);
+x = (1:392)';
+NetworkSwappedfrom = table(M,x);
+NetworkSwappedfrom = sortrows(NetworkSwappedfrom,{'M','x'},'ascend');
+b = table2array(NetworkSwappedfrom(:,2));
+regionswapmatbyyeo = regionswapmat(b,b);
+figure
+RtoRself = imagesc(regionswapmatbyyeo);
+colormap(turbo);
+
+jex = table2array(NetworkSwappedfrom(:,1));
+[Can, ia, ic] = unique(jex);
+
+v = [ia;392];
+vstr = movmean(v,2);
+vstr = filter([1 1],2,v);
+vstr = vstr(2:end);
+hold
+xticks(vstr);
+yticks(vstr);
+yeol ={'Visual','Somatomotor','Dorsal Attn','Ventral Attn','Limbic','Fronto-parietal','Default Mode','SubCortical','Cerebellar'};
+xticklabels(yeol)
+yticklabels(yeol);
+
+hold on
+for i=1:length(v)
+y = v(i)
+yline(y,'w','LineWidth',1)
+end
+
+for i=1:length(v)
+y = v(i)
+xline(y,'w','LineWidth',1)
+end
+hold off
+title('R to R self')
+
+
+%by the join earlier
+regionrowaverage = sum(regionswapmat,[1]);
+regioncolaverage = sum(regionswapmat,[2]);
+
+
+plotrsf= (regionrowaverage'+regioncolaverage)/2
+plotrsf(plotrsf == 0) = NaN
+
+
+%% plot figures of Regional Swap Frequency, need to have Keith's repo on path as well
+atlasblobs_list=load('atlasblobs_saved.mat');
+atlasblobs_list=atlasblobs_list.atlasblobs;
+
+%set colormap
+cmap=hot;
+
+%choose atlas
+%options for whichatlas: aal, cc200, cc400, ez, ho, tt, fs86
+whichatlas={'cc400'}
+clc;
+
+%set data you want to plot
+data=plotrsf;
+
+%set min/max limits for plot
+clim=[0 1];
+
+img=display_atlas_blobs(data,atlasblobs_list,...
+    'atlasname',whichatlas,...
+    'render',true,...
+    'backgroundimage',true,...
+    'crop',true,...
+    'colormap',cmap,...
+    'clim', clim);
+
+figure;
+imshow(img);
+
+%to show colorbar:
+c=colorbar('SouthOutside', 'fontsize', 16);
+c.Label.String='RSF';
+set(gca,'colormap',cmap);
+c.TickLabels=[0:0.1:1.1];
+title('Regional Swap Frequency', 'fontsize',16);
+
+% to annotate RH, LH, medial, lateral sides fo the brain
+annotation('textbox',[.835 .38 .1 .2],'String','RH','EdgeColor','none', 'fontsize',16,'color','white')
+annotation('textbox',[.12 .38 .1 .2],'String','LH','EdgeColor','none', 'fontsize',16,'color','white')
+annotation('textbox',[.45 .9 .1 .04],'String','Lateral','EdgeColor','none', 'fontsize',16,'color','white', 'horizontalalignment','center','backgroundcolor','black')
+annotation('textbox',[.45 .21 .1 .04],'String','Medial','EdgeColor','none', 'fontsize',16,'color','white', 'horizontalalignment','center', 'backgroundcolor','black')
+
+%% 
+v = [ia];
+
+%set self-self regions to nan to prevent mean of within-network from
+%including their data
+regionswapmatbyyeo(eye(size(regionswapmatbyyeo))==1) = nan;
+[ne,~,rjsum] = unique(NetworkSwappedfrom(:, [1]), 'rows');
+accumarray(rjsum,1)
+ne(:,2) = array2table(ans);
+bsxfun(@times,table2array(ne(:,2)),table2array(ne(:,2))')
+networkpairs = ans
+networkpairs = networkpairs-diag(table2array(ne(:,2)));
+
+networkaveragex = cell(9,9);
+count =table2array(ne(:,2))
+y = ne(:,2)
+
+cumsum(table2array(y));
+mijo = [v ans]
+
+for i =1:9
+for ii = 1:9
+san = count(i)
+mira = mijo(i,1);
+moja = mijo(i,2);
+mixa = mijo(ii,1);
+moxa = mijo(ii,2);
+mean(regionswapmatbyyeo(mira:moja,mixa:moxa),[1 2],'omitnan')
+jil = mat2cell(ans,1,1);
+networkaveragex(i,ii) = jil;
+end
+end
+figure
+h = heatmap(cell2mat(networkaveragex));
+h.CellLabelFormat = '%.2e';
+title('Network to Network')
+grid off
+colormap('autumn')
+colormap;
+colormap(flipud(ans));
+
+%% network SF
+
+Rsf = [(sortrows(NetworkSwappedfrom,{'x','M'},'ascend')) array2table(plotrsf)];
+table2array(Rsf);
+figure
+[p,t,stats] = anova1(ans(:,3),ans(:,1));
+figure
+[c,m,h] =  multcompare(stats,'Dimension',[1],'CType','bonferroni');
+figure
+vs = violinplot(Rsf.plotrsf,Rsf.M);
+
+
+

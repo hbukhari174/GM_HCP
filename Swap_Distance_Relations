@@ -1,0 +1,375 @@
+clear all
+j = matfile('twininfo_997subj.mat');
+Retest = 1:41
+T = table(j.subjects(Retest,1), j.gender(Retest,1), j.age(Retest,1));
+T.Properties.VariableNames([1 2 3]) = {'Subject ID' 'Sex' 'Age'};
+allfiles = dir('*pairs.mat');
+allfiles = natsortfiles(allfiles);
+for ii=1:length(allfiles)
+fileData{ii} = matfile(allfiles(ii).name);
+offdata{ii} = fileData{ii}.offdiag_swap_counts(1:997,1);
+end
+T.OffDiagCounts = transpose(offdata);
+T.Sex = char(T{:,2});
+dist = zeros(997,997);
+for i=1:41
+dist(i,:) = T.OffDiagCounts{i};
+end
+row = 1:41;
+col = [21,29,51,67,70,96,111,133,158,168,182,192,196,204,221,223,231,265,312,322,339,351,378,388,408,414,419,442,445,459,529,552,651,721,758,759,790,867,913,914,925];
+allregionandpersonswapindex = cell(length(row),1);
+jior = [];
+tic
+parfor i=1:length(row)
+c = row(i);
+xx = col(i);
+jiorlength = dist(c,xx);
+Chosenfiles = matfile(allfiles(c).name);
+hoposition = Chosenfiles.swap_positions;
+jan = squeeze(hoposition(xx,:,:));
+jan(jan(:,1)==jan(:,2),:)=[];
+jior = [(repelem(c,jiorlength)'),((repelem(xx,jiorlength))'),jan];
+jil = mat2cell(jior,jiorlength,4);
+allregionandpersonswapindex(i)= jil;
+end
+toc
+ARSI = vertcat(allregionandpersonswapindex{:});
+[i,~,j] = unique(ARSI(:, [3 4]), 'rows');
+accumarray(j,1)
+[i ans]
+mc2 = accumarray(ans(:,[1 2]), ans(:,3));
+mc2 = mc2/length(row);
+regionrowaverage = sum(mc2,[1]);
+regioncolaverage = sum(mc2,[2]);
+plotrsf= (regionrowaverage'+regioncolaverage)/2;
+plotrsf(plotrsf == 0) = NaN;
+plotrsf(392,1) = NaN
+selfrsf = plotrsf;
+%% now MZ
+clearvars -except selfrsf
+%go to test_results folder
+j = matfile('twininfo_997subj.mat');;
+
+%load('Allsffresh.mat','-mat','dist','allfiles')
+MZmat = j.matchMZ;
+[row,col]=find(MZmat==1);
+%each testoutput file has a variable called
+%swap_positions:rows where regions don't match add up to form the total 
+%frequency of swaps when matching to 997
+%subjects. Sum swaps contains the first two columns, where coordinates
+%of the swaps and the thrid is frequency counts.
+% Here I am using the swap_positions variable to collect each swap, and then adding these
+%each region and dividing by the total number of pairs . 
+allregionandpersonswapindex = cell(length(row),1);
+jior = [];
+tic
+parfor i=1:length(row)
+c = row(i)
+xx = col(i)
+jiorlength = dist(c,xx);
+Chosenfiles = matfile(allfiles(c).name);
+hoposition = Chosenfiles.swap_positions;
+jan = squeeze(hoposition(xx,:,:));
+jan(jan(:,1)==jan(:,2),:)=[];
+jior = [(repelem(c,jiorlength)'),((repelem(xx,jiorlength))'),jan];
+jil = mat2cell(jior,jiorlength,4);
+allregionandpersonswapindex(i)= jil;
+end
+toc
+
+
+
+ARSI = vertcat(allregionandpersonswapindex{:});
+[i,~,j] = unique(ARSI(:, [3 4]), 'rows');
+accumarray(j,1)
+[i ans]
+mc2 = accumarray(ans(:,[1 2]), ans(:,3));
+mc2 = mc2/length(row);
+regionrowaverage = sum(mc2,[1]);
+regioncolaverage = sum(mc2,[2]);
+plotrsf= (regionrowaverage'+regioncolaverage)/2;
+plotrsf(plotrsf == 0) = NaN;
+
+MZrsf = plotrsf;
+%% plot figures
+atlasblobs_list=load('atlasblobs_saved.mat');
+atlasblobs_list=atlasblobs_list.atlasblobs;
+%set colormap
+cmap=hot;
+%choose atlas
+%options for whichatlas: aal, cc200, cc400, ez, ho, tt, fs86
+whichatlas={'cc400'}
+clc;
+%set data you want to plot
+data=plotrsf;
+%set min/max limits for plot
+clim=[0 1];
+img=display_atlas_blobs(data,atlasblobs_list,...
+'atlasname',whichatlas,...
+'render',true,...
+'backgroundimage',true,...
+'crop',true,...
+'colormap',cmap,...
+'clim', clim);
+figure;
+imshow(img);
+%to show colorbar:
+c=colorbar('SouthOutside', 'fontsize', 16);
+c.Label.String='';
+set(gca,'colormap',cmap);
+c.TickLabels=[0:0.1:1.1];
+
+title('Regional Swap Frequency - MZ', 'fontsize',16);
+annotation('textbox',[.835 .38 .1 .2],'String','RH','EdgeColor','none', 'fontsize',16,'color','white')
+annotation('textbox',[.12 .38 .1 .2],'String','LH','EdgeColor','none', 'fontsize',16,'color','white')
+annotation('textbox',[.45 .9 .1 .04],'String','Lateral','EdgeColor','none', 'fontsize',16,'color','white', 'horizontalalignment','center','backgroundcolor','black')
+annotation('textbox',[.45 .21 .1 .04],'String','Medial','EdgeColor','none', 'fontsize',16,'color','white', 'horizontalalignment','center', 'backgroundcolor','black')
+saveas(gcf,('suppfig/RSF-MZ'));
+exportgraphics(gcf,('suppfig/RSF-MZ.jpg'))
+
+
+%% dz
+clearvars -except selfrsf MZrsf dist allfiles
+
+j = matfile('twininfo_997subj.mat');
+
+overlap = (j.matchDZ+j.matchMZ == 2);
+[ox,oy] = find(overlap ==1);
+DZmat = j.matchDZ;
+DZmat(ox,oy) = 0;
+[row,col] = find(triu(DZmat)==1)
+
+allregionandpersonswapindex = cell(length(row),1);
+jior = [];
+tic
+parfor i=1:length(row)
+c = row(i)
+xx = col(i)
+jiorlength = dist(c,xx);
+Chosenfiles = matfile(allfiles(c).name);
+hoposition = Chosenfiles.swap_positions;
+jan = squeeze(hoposition(xx,:,:));
+jan(jan(:,1)==jan(:,2),:)=[];
+jior = [(repelem(c,jiorlength)'),((repelem(xx,jiorlength))'),jan];
+jil = mat2cell(jior,jiorlength,4);
+allregionandpersonswapindex(i)= jil;
+end
+toc
+
+ARSI = vertcat(allregionandpersonswapindex{:});
+[i,~,j] = unique(ARSI(:, [3 4]), 'rows');
+accumarray(j,1);
+[i ans];
+mc2 = accumarray(ans(:,[1 2]), ans(:,3));
+mc2 = mc2/length(row);
+
+%using matrix
+regionrowaverage = sum(mc2,[1]);
+regioncolaverage = sum(mc2,[2]);
+
+
+plotrsf= (regionrowaverage'+regioncolaverage)/2;
+plotrsf(plotrsf == 0) = NaN;
+
+DZrsf = plotrsf;
+%% plot figures
+atlasblobs_list=load('atlasblobs_saved.mat');
+atlasblobs_list=atlasblobs_list.atlasblobs;
+%set colormap
+cmap=hot;
+%choose atlas
+%options for whichatlas: aal, cc200, cc400, ez, ho, tt, fs86
+whichatlas={'cc400'}
+clc;
+%set data you want to plot
+data=plotrsf;
+%set min/max limits for plot
+clim=[0 1];
+img=display_atlas_blobs(data,atlasblobs_list,...
+'atlasname',whichatlas,...
+'render',true,...
+'backgroundimage',true,...
+'crop',true,...
+'colormap',cmap,...
+'clim', clim);
+figure;
+imshow(img);
+%to show colorbar:
+c=colorbar('SouthOutside', 'fontsize', 16);
+c.Label.String='';
+set(gca,'colormap',cmap);
+c.TickLabels=[0:0.1:1.1];
+
+title('Regional Swap Frequency - DZ', 'fontsize',16);
+annotation('textbox',[.835 .38 .1 .2],'String','RH','EdgeColor','none', 'fontsize',16,'color','white')
+annotation('textbox',[.12 .38 .1 .2],'String','LH','EdgeColor','none', 'fontsize',16,'color','white')
+annotation('textbox',[.45 .9 .1 .04],'String','Lateral','EdgeColor','none', 'fontsize',16,'color','white', 'horizontalalignment','center','backgroundcolor','black')
+annotation('textbox',[.45 .21 .1 .04],'String','Medial','EdgeColor','none', 'fontsize',16,'color','white', 'horizontalalignment','center', 'backgroundcolor','black')
+saveas(gcf,('suppfig/RSF-DZ'));
+exportgraphics(gcf,('suppfig/RSF_DZ.jpg'))
+
+%close all
+
+%% FS
+clearvars -except selfrsf MZrsf DZrsf dist allfiles
+
+j = matfile('twininfo_997subj.mat');;
+FSmat = j.matchfullsib;
+[row,col]=find(FSmat==1)
+%load testoutput files P_test_%_yeo.mat
+allregionandpersonswapindex = cell(length(row),1);
+jior = [];
+tic
+parfor i=1:length(row)
+c = row(i)
+xx = col(i)
+jiorlength = dist(c,xx);
+Chosenfiles = matfile(allfiles(c).name);
+hoposition = Chosenfiles.swap_positions;
+jan = squeeze(hoposition(xx,:,:));
+jan(jan(:,1)==jan(:,2),:)=[];
+jior = [(repelem(c,jiorlength)'),((repelem(xx,jiorlength))'),jan];
+jil = mat2cell(jior,jiorlength,4);
+allregionandpersonswapindex(i)= jil;
+end
+toc
+
+ARSI = vertcat(allregionandpersonswapindex{:});
+[i,~,j] = unique(ARSI(:, [3 4]), 'rows');
+accumarray(j,1);
+[i ans];
+mc2 = accumarray(ans(:,[1 2]), ans(:,3));
+mc2 = mc2/length(row);
+
+%using matrix
+regionrowaverage = sum(mc2,[1]);
+regioncolaverage = sum(mc2,[2]);
+
+
+plotrsf= (regionrowaverage'+regioncolaverage)/2;
+plotrsf(plotrsf == 0) = NaN;
+
+FSrsf = plotrsf;
+%% plot figures
+atlasblobs_list=load('atlasblobs_saved.mat');
+atlasblobs_list=atlasblobs_list.atlasblobs;
+%set colormap
+cmap=hot;
+%choose atlas
+%options for whichatlas: aal, cc200, cc400, ez, ho, tt, fs86
+whichatlas={'cc400'}
+clc;
+%set data you want to plot
+data=plotrsf;
+%set min/max limits for plot
+clim=[0 1];
+img=display_atlas_blobs(data,atlasblobs_list,...
+'atlasname',whichatlas,...
+'render',true,...
+'backgroundimage',true,...
+'crop',true,...
+'colormap',cmap,...
+'clim', clim);
+figure;
+imshow(img);
+%to show colorbar:
+c=colorbar('SouthOutside', 'fontsize', 16);
+c.Label.String='';
+set(gca,'colormap',cmap);
+c.TickLabels=[0:0.1:1.1];
+
+title('Regional Swap Frequency - FS', 'fontsize',16);
+annotation('textbox',[.835 .38 .1 .2],'String','RH','EdgeColor','none', 'fontsize',16,'color','white')
+annotation('textbox',[.12 .38 .1 .2],'String','LH','EdgeColor','none', 'fontsize',16,'color','white')
+annotation('textbox',[.45 .9 .1 .04],'String','Lateral','EdgeColor','none', 'fontsize',16,'color','white', 'horizontalalignment','center','backgroundcolor','black')
+annotation('textbox',[.45 .21 .1 .04],'String','Medial','EdgeColor','none', 'fontsize',16,'color','white', 'horizontalalignment','center', 'backgroundcolor','black')
+saveas(gcf,('suppfig/RSF-FS'));
+exportgraphics(gcf,('suppfig/RSF_FS.jpg'))
+
+close all
+%% NRNA
+clearvars -except selfrsf MZrsf DZrsf dist allfiles FSrsf
+filename = 'NRNASF_allyeopairspenalty.mat'
+
+
+load(filename)
+%load workspace
+
+NRNArsf = plotrsf;
+%% plot figures
+atlasblobs_list=load('atlasblobs_saved.mat');
+atlasblobs_list=atlasblobs_list.atlasblobs;
+%set colormap
+cmap=hot;
+%choose atlas
+%options for whichatlas: aal, cc200, cc400, ez, ho, tt, fs86
+whichatlas={'cc400'}
+clc;
+%set data you want to plot
+data=NRNArsf;
+%set min/max limits for plot
+clim=[0 1];
+img=display_atlas_blobs(data,atlasblobs_list,...
+'atlasname',whichatlas,...
+'render',true,...
+'backgroundimage',true,...
+'crop',true,...
+'colormap',cmap,...
+'clim', clim);
+figure;
+imshow(img);
+%to show colorbar:
+c=colorbar('SouthOutside', 'fontsize', 16);
+c.Label.String='';
+set(gca,'colormap',cmap);
+c.TickLabels=[0:0.1:1.1];
+
+title('Regional Swap Frequency - Unrelated Non Age-Matched', 'fontsize',16);
+annotation('textbox',[.835 .38 .1 .2],'String','RH','EdgeColor','none', 'fontsize',16,'color','white')
+annotation('textbox',[.12 .38 .1 .2],'String','LH','EdgeColor','none', 'fontsize',16,'color','white')
+annotation('textbox',[.45 .9 .1 .04],'String','Lateral','EdgeColor','none', 'fontsize',16,'color','white', 'horizontalalignment','center','backgroundcolor','black')
+annotation('textbox',[.45 .21 .1 .04],'String','Medial','EdgeColor','none', 'fontsize',16,'color','white', 'horizontalalignment','center', 'backgroundcolor','black')
+saveas(gcf,('suppfig/RSF-NRna'));
+exportgraphics(gcf,('suppfig/RSF_NRna.jpg'))
+
+close all
+%% SP rank
+clearvars -except selfrsf MZrsf DZrsf dist allfiles FSrsf NRNArsf
+categories = [selfrsf MZrsf DZrsf FSrsf NRNArsf]
+no = [1 2 3 4 5]
+rel = no'
+categories'
+for i=1:392
+r=ans(1:5,i)
+plink =corr(r,rel,'rows','complete','Type','Spearman')
+laNAn{i} = plink
+end
+pljink=vertcat(laNAn{:})
+find(pljink<=0)
+for i=1:length(pljink)
+pljink(ans,1)=nan
+end
+data=pljink
+atlasblobs_list=load('atlasblobs_saved.mat');
+atlasblobs_list=atlasblobs_list.atlasblobs;
+summermap =  brewermap(10000, 'Purples');
+cmap=summermap;
+whichatlas={'cc400'}
+clc;
+clim=[min(data) max(data)];
+img=display_atlas_blobs(data,atlasblobs_list,...
+'atlasname',whichatlas,...
+'render',true,...
+'backgroundimage',true,...
+'crop',true,...
+'colormap',cmap,...
+'clim', clim);
+figure;
+imshow(img);
+%to show colorbar:
+c=colorbar('SouthOutside', 'fontsize', 16);
+c.Label.String=string('SP Rank');
+set(gca,'colormap',cmap);
+caxis=[min(data) max(data)];
+steps=(max(data)-min(data))/10
+c.TickLabels=[min(data):steps:max(data)+steps];
