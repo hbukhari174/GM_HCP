@@ -1,7 +1,7 @@
 
 %run this portion in retest results folder to obtain Self swaps
 j = matfile('twininfo_997subj.mat');
-Retest = 1:41
+Retest = [21,29,51,67,70,96,111,133,158,168,182,192,196,204,221,223,231,265,312,322,339,351,378,388,408,414,419,442,445,459,529,552,651,721,758,759,790,867,913,914,925];
 T = table(j.subjects(Retest,1), j.gender(Retest,1), j.age(Retest,1));
 T.Properties.VariableNames([1 2 3]) = {'Subject ID' 'Sex' 'Age'};
 allfiles = dir('*o.mat');
@@ -41,7 +41,7 @@ clearvars -except selfswappercent
 % run this code for swap matrix for retest_results
 
 j = matfile('twininfo_997subj.mat');
-Retest = 1:41
+Retest = [21,29,51,67,70,96,111,133,158,168,182,192,196,204,221,223,231,265,312,322,339,351,378,388,408,414,419,442,445,459,529,552,651,721,758,759,790,867,913,914,925];
 T = table(j.subjects(Retest,1), j.gender(Retest,1), j.age(Retest,1));
 T.Properties.VariableNames([1 2 3]) = {'Subject ID' 'Sex' 'Age'};
 allfiles = dir('*o.mat');
