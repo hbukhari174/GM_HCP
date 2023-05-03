@@ -70,31 +70,22 @@ exportgraphics(gcf,('DistMatrixfortest-retest.jpg'))
 saveas(gcf,('DISTMATRIXfortest-retestFIG'));
 
 clearvars -except selfswappercent selfswapmapercentmatt
-
-% go run in test_folder, make sure not to clear variables
-
+% generate dist matrix for test dataset and then run these!
 j = matfile('twininfo_997subj.mat');
-NRmat = j.matchhalfsib+j.matchDZ+j.matchfullsib+j.matchhalfsib+j.matchMZ;
+NRmat =j.matchDZ+j.matchfullsib+j.matchhalfsib+j.matchMZ;
 NRmat = NRmat == 0;
 NRmat = NRmat.*~eye(size(NRmat));
-[row,col] = find(triu(NRmat)==1);
+NRmat=NRmat;
+[NRx,NRy] =find(NRmat==1);
+[~,~,f] = unique(j.age);
+agematch=f==f';
+agematch=agematch & eye(size(agematch))==0;
+NRagemat=NRmat+agematch;
+NRagemat=NRagemat==2;
+NRna= NRmat-NRagemat;
+[row,col]=find(triu(NRna==1));
 
-T = table(j.subjects, j.gender, j.age);
-T.Properties.VariableNames([1 2 3]) = {'Subject ID' 'Sex' 'Age'};
-allfiles = dir('*o.mat');
-allfiles = natsortfiles(allfiles);
-for ii=1:length(allfiles)
-fileData{ii} = matfile(allfiles(ii).name);
-offdata{ii} = fileData{ii}.offdiag_swap_counts;
-end
-T.OffDiagCounts = transpose(offdata);
-T.Sex = char(T{:,2});
-T.index = (1:height(T)).';
-dist = zeros(997,997);
-for i=1:997
-dist(i,:) = T.OffDiagCounts{i};
-end
-v = [];
+
 for i=1:length(row)
 c = row(i);
 xx = col(i);
@@ -102,27 +93,32 @@ v{i} = dist(xx, c);
 end
 v = cell2mat(v);
 vi = v*100/(392);
-NRswaps = vi';
-NRswaps = table(NRswaps);
-NRswaps.Relation(1:496100,1)= {'NR'};
-clearvars -except selfswappercent selfswapmapercentmatt  NRswaps dist
+NRNAswaps = vi';
+NRNAswaps = table(NRNAswaps);
+NRNAswaps.Relation(1:length(row),1)= {'NRNA'};
+clearvars -except NRNAswaps dist selfswaps
 j = matfile('twininfo_997subj.mat');
 [row,col] = find(triu(j.matchfullsib)==1)
 v = [];
 for i=1:length(row)
 c = row(i);
 xx = col(i);
-v{i} = dist(xx, c);
+v{i} = dist(c, xx);
 end
 v = cell2mat(v);
-v = v*100/(392)
-FSswaps = v'
+vi = v*100/(392)
+FSswaps = vi'
 FSswaps = table(FSswaps);
 FSswaps.Relation(1:200,1) = {'FS'}
-clearvars -except selfswappercent selfswapmapercentmatt  NRswaps dist FSswaps
+clearvars -except NRNAswaps dist FSswaps selfswaps
 
 j = matfile('twininfo_997subj.mat');
-[row,col] = find(triu(j.matchDZ)==1)
+
+overlap = (j.matchDZ+j.matchMZ == 2);
+[ox,oy] = find(overlap ==1);
+DZmat = j.matchDZ;
+DZmat(ox,oy) = 0;
+[row,col] = find(triu(DZmat)==1)
 
 v = [];
 for i=1:length(row)
@@ -131,11 +127,11 @@ xx = col(i);
 v{i} = dist(xx, c);
 end
 v = cell2mat(v);
-v = v*100/392
-DZswaps = v'
+vi = v*(100/392)
+DZswaps = vi'
 DZswaps = table(DZswaps);
-DZswaps.Relation(1:95,1) = {'DZ'}
-clearvars -except selfswappercent selfswapmapercentmatt  NRswaps dist FSswaps DZswaps
+DZswaps.Relation(1:length(row),1) = {'DZ'}
+clearvars -except  NRNAswaps dist FSswaps DZswaps selfswaps
 j = matfile('twininfo_997subj.mat');
 [row,col] = find(triu(j.matchMZ)==1);
 v = [];
@@ -145,43 +141,50 @@ xx = col(i);
 v{i} = dist(xx, c);
 end
 v = cell2mat(v);
-v = v*100/(392)
-MZswaps = v'
+vi = v*100/392
+MZswaps = vi'
 MZswaps = table(MZswaps);
-MZswaps.Relation(1:130,1) = {'MZ'};
+MZswaps.Relation(1:length(row),1) = {'MZ'};
 
-[~,~,unage] = unique(j.age);
-agematch=unage==unage';
-agematch=agematch & eye(size(agematch))==0;
-agematch = triu(agematch);
-NRmat = j.matchhalfsib+j.matchDZ+j.matchfullsib+j.matchhalfsib+j.matchMZ;
+clearvars -except  NRNAswaps dist FSswaps DZswaps selfswaps MZswaps j
+NRmat =j.matchDZ+j.matchfullsib+j.matchhalfsib+j.matchMZ;
 NRmat = NRmat == 0;
 NRmat = NRmat.*~eye(size(NRmat));
-
+NRmat=NRmat;
+[NRx,NRy] =find(NRmat==1);
+[~,~,f] = unique(j.age);
+agematch=f==f';
+agematch=agematch & eye(size(agematch))==0;
 NRagemat=NRmat+agematch;
 NRagemat=NRagemat==2;
-NRagemat=triu(NRagemat);
-NRagematswaps=dist(NRagemat)*100/392;
-NRAMswaps = [array2table(NRagematswaps)];
-NRAMswaps.Relation(:,1) = {'NRAM'};
-
-NRswaps.Properties.VariableNames(1) = {'Swap'};
+[row,col]=find(triu(NRagemat==1));
+v = [];
+for i=1:length(row)
+c = row(i);
+xx = col(i);
+v{i} = dist(xx, c);
+end
+v = cell2mat(v);
+vi = v*(100/392)
+NRAMswaps = vi'
+NRAMswaps = table(NRAMswaps);
+NRAMswaps.Relation(1:length(row),1) = {'NRAM'};
 NRAMswaps.Properties.VariableNames(1) = {'Swap'};
+NRNAswaps.Properties.VariableNames(1) = {'Swap'};
 MZswaps.Properties.VariableNames(1) = {'Swap'};
 DZswaps.Properties.VariableNames(1) = {'Swap'};
 FSswaps.Properties.VariableNames(1) = {'Swap'};
-selfswappercent.Properties.VariableNames(1) = {'Swap'};
+selfswaps.Properties.VariableNames(1) = {'Swap'};
 
 
-
-Swapsia = [NRswaps;NRAMswaps;MZswaps;DZswaps;FSswaps;selfswappercent];
+Swapsia = [selfswaps;MZswaps;DZswaps;FSswaps;NRNAswaps;NRAMswaps];
 origin = Swapsia.Relation;
 origin = cellstr(origin);
+figure
 vs = violinplot(Swapsia.Swap,origin);
-
+figure
 [p,t,stats] = anova1(Swapsia.Swap,origin)
+figure
 [c,m,h] =  multcompare(stats,'Dimension',[1],'CType','bonferroni');
-exportgraphics(gcf,('multcompare.jpg'))
-saveas(gcf,('multcompareforrelatedness'));
-
-
+exportgraphics(gcf,('multcomparefornoselfRel.jpg'))
+% saveas(gcf,('multcompareforrelatednessNoselfRel'));
